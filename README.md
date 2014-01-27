@@ -43,10 +43,10 @@ some member methods, add some command handlers that look like this:
 
 	public NexAuthParams cmd_CommandNameHere(Command cmd) throws NexAuthException
 
-The best example on how to implement this can be found at NexAuthServet.java `cmd_GetNexAuthVersion` member method.
+The best example on how to implement this can be found at [NexAuthServet.java](src/net/nexhawks/nexauth/NexAuthServlet.java) `cmd_GetNexAuthVersion` member method.
 
 ### Client
 
-
+See [demo.html](client-library/demo.html).
 
 
