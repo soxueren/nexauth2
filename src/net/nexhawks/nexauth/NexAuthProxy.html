@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script type="text/javascript">
+            (function(){
+                var origins = {};
+                var originArray = __origins__;
+                var url = String(document.location);
+                var xhrs = {};
+                var msgKey = '';
+                var proxyUrl = '';
+                
+                for(var origin in originArray){
+                    origins[originArray[origin]] = true;
+                }
+
+                function createXHR(){
+                    if(XMLHttpRequest){return new XMLHttpRequest()}
+                    if(ActiveXObject){
+                        var a="Msxml2.XMLHTTP.",b=[a+"6.0",a+"3.0","Microsoft.XMLHTTP"];
+                        for(var i=0;i<b.length;i++){try{return new ActiveXObject(b[i])}catch(e){}}
+                    }
+                    return false;
+                }
+                
+                function doCallback(source, origin, id, xhr){
+                    var obj = {
+                        type: 'readystate',
+                        id: id,
+                        xhr: {
+                            responseText: xhr.responseText,
+                            readyState: xhr.readyState,
+                            status: xhr.status,
+                            statusText: xhr.statusText
+                        }
+                    };
+                    source.postMessage(msgKey + JSON.stringify(obj), origin);
+                }
+                
+                function messageReceived(event){
+                    // filter invalid origin out
+                    if(!origins[event.origin]){
+                        console.error("Origin "+event.origin +" is not permitted");
+                        return;
+                    }
+                    try{
+
+                        var origin = event.origin;
+                        var source = event.source;
+                        var obj = JSON.parse(event.data);
+                        var type = obj.type;
+
+                        if(type == 'post'){
+                            var id = obj.id;
+                            var data = obj.data;
+
+                            var xhr = createXHR();
+                            xhr.open("POST", url);
+                            xhr.onreadystatechange = function(){
+                                doCallback(source, origin, id, xhr);
+                                if(this.readyState == 4){
+                                    // end of request
+                                    delete xhrs[id];
+                                }
+                            };
+
+                            xhrs[id] = xhr;
+                            xhr.send(data);
+                        }else if(type == 'abort'){
+                            var id = obj.id;
+                            if(!xhrs[id])
+                                return;
+                            var xhr = xhrs[id];
+                            xhr.abort();
+                            delete xhrs[id];
+                        }else if(type == 'init'){
+                            msgKey = obj.msgKey;
+                            proxyUrl = obj.url;
+                            var msg = {
+                                type: 'ready',
+                                url: proxyUrl
+                            };
+                            event.source.postMessage(msgKey + JSON.stringify(msg), event.origin);
+                        }else{
+                            throw "invalid message type: "+String(type);
+                        }
+                    
+                    }catch(e){
+                        var msg = {
+                            type: 'error',
+                            message: e,
+                            url: proxyUrl
+                        };
+                        console.error("Error while processing event: "+e);
+                        event.source.postMessage(msgKey + JSON.stringify(msg), event.origin);
+                    }
+                }
+                
+                window.addEventListener("message", messageReceived, false);
+                
+            })();
+        </script>
+    </head>
+    <body>
+    </body>
+</html>

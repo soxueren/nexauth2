@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta content="width=1024, maximum-scale=1.0" name="viewport" />
+
+		<title>NexAuth Demo</title>
+	
+		<script src="js/jquery.min.js"></script>
+		<script src="js/cryptico.min.js"></script>
+		<script src="js/nexauth2.js"></script>
+		<script type="text/javascript">
+		$(function(){
+			var fun;
+            var client = new NAClient();
+            client.setEndpoint("/NexAuthEndpoint");
+            client.setLoginInfo("TestUser", "TestHash");
+            
+            var tim;
+            var txt = "A";/*
+            for(var i = 0; i < 19; i++)
+                txt+=txt;*/
+            
+			fun = function(){
+				
+				var req = {
+					cmd: "GetNexAuthVersion",
+					params: {
+						paramA: "valueA",
+						paramB: "valueB",
+                        paramC: txt
+					}
+				};
+				
+				req.onDone = function(obj){
+					$("#stat").text("Done: "+JSON.stringify(obj));
+					//fun();
+                    //alert(new Date().getTime() - tim);
+				};
+				
+				req.onError = function(phase, msg){
+					$("#stat").text("Phase="+phase+", Msg="+msg);
+					
+				};
+				
+				req.onConnected = function(){
+					$("#stat").text("Connected");
+				};
+				
+				req.onAuthorized = function(greet){
+					$("#stat").text("Auth: " +greet);
+                    tim = new Date().getTime();
+				};
+				
+				req.onAborted = function(){
+					$("#stat").text("Aborted");
+				};
+				
+				req.onStarted = function(){
+					$("#stat").text("Started");
+				};
+				tim = new Date().getTime();
+				client.request(req);
+			};
+            $("#doButton").click(function(){
+            
+				fun();
+            
+            });
+		});
+		</script>
+	</head>
+	<body>
+		<p>
+			<input type="button" id="doButton" value="GetNexAuthVersion" />
+		</p>
+		<pre id="stat">not running</pre>
+           
+	</body>
+</html>
